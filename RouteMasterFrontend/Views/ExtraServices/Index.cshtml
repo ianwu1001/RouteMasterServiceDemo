@@ -1,0 +1,241 @@
+﻿@section Styles{
+
+    <style>
+        .descriptionBorder p {
+            border: 1px solid transparent; /* 初始设置外框线为透明 */
+            border-radius: 8px; /* 添加圆角效果 */
+            transition: border-color 0.3s ease; /* 添加过渡效果 */
+        }
+
+            .descriptionBorder p:hover {
+                border-color: #ccc; /* 在 hover 时设置外框线颜色 */
+            }
+
+        .currentPage {
+            background-color: #0D6EFD;
+            color: white;
+        }
+
+        .pagination li {
+            cursor: pointer;
+        }
+    </style>
+
+
+
+
+}
+<div id="app">
+    <div class="row">
+        <div class="col-2">
+            <label>每頁顯示筆數</label>
+            <select v-model="pageSize" class="form-select" @@change="filterExtraServiceDtoesToNewPageSize">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+            </select>
+        </div>
+        <div class="d-flex justify-content-end ">
+            <div class="m-1"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <input type="search" v-model.lazy="keyword" @@blur="filterExtraServiceDtoes" placeholder="搜尋服務項目名稱" />
+        </div>
+
+    </div>
+
+
+
+
+
+    <div v-for="item in extraServiceDtoes" class="card m-3 mx-auto" style="width:800px;">
+        <div class="row d-flex">
+            <div class="col-6">
+                <div class="card-body">
+                    <img v-bind:src="item.image" class="card-img-top" />
+                    <br />
+                    <br />
+                    <h5 class="card-title" style="text-align:center">{{item.name}}</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">{{item.regionName}}  {{item.attractionName}}</li>
+                    <li class="list-group-item"> {{ item.status ? '上架中' : '已下架' }}</li>
+                </ul>
+                <div class="card-body">
+                </div>
+            </div>
+            <div class="col-6 descriptionBorder  p-3">
+                <div>{{item.description}}</div>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; ">
+            <button id="turnToPurchasingPage" class="m-1  btn btn-primary" @@click="goToPurchasingPage(item.id)">前往購買</button>
+        </div>
+    </div>
+
+
+
+
+
+    <nav aria-label="...">
+        <ul class="pagination justify-content-center mx-auto">
+            <li class="page-item " v-bind:class="{'disabled':page==1}" @@click="page!=1 && prevPageHandler()">
+                <a class="page-link">Previous</a>
+            </li>
+            <li class="page-item" v-for="(value,index) in totalPage" :key="index" @@click="pageClickHandler(value)">
+                <a v-bind:class="{'currentPage':page==value,'page-link':true}">{{value}}</a>
+            </li>
+            <li class="page-item" v-bind:class="{'disabled':page==totalPage}" @@click="page!=totalPage&&nextPageHandler()">
+                <a class="page-link">Next</a>
+            </li>
+        </ul>
+    </nav>
+
+
+
+
+
+
+
+
+
+    <div class="modal fade" id="ExtraServiceDetailModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
+         aria-labelledby="modalTitleId" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitleId">詳細資料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">FirstName:</label>
+                        <input class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">LastName:</label>
+                        <input class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Title:</label>
+                        <input class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary" @@click="insert">新增</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+@section Scripts{
+    <script src="https://kit.fontawesome.com/f9e3b12327.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3.2.36/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+            integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+
+    <script>
+        let baseAddress = "https://localhost:7015";
+        let vueApp = {
+            data() {
+                return {
+                    extraServiceDtoes: [],
+                    keyword: "",
+                    page: 1,
+                    pageSize: 5,
+                    totalPage: "",
+
+
+
+                };
+            },
+            mounted: function () {
+                let _this = this;
+
+                _this.filterExtraServiceDtoes();
+            },
+            methods: {
+                filterExtraServiceDtoes: function () {
+                    let _this = this;
+                    let request = {};
+
+                    request.Keyword = _this.keyword;
+                    request.Page = _this.page;
+                    request.PageSize = _this.pageSize;
+
+
+                    axios.post(`${baseAddress}/api/ExtraServiceVuePage/filter`, request).then(response => {
+                        _this.extraServiceDtoes = response.data.extraServiceVuePageDtoes;
+                        _this.totalPage = response.data.totalPage;
+
+
+                        for (let i = 0; i < _this.extraServiceDtoes.length; i++) {
+                            let item = _this.extraServiceDtoes[i];
+                        }
+
+
+                    }).catch(err => {
+                        alert(err);
+                    })
+                },
+      
+                goToPurchasingPage: function (itemId) {
+                    console.log('買起來')
+                    let newUrl = '/ExtraServices/Details/' + itemId
+                    window.location.href = newUrl;
+
+                },
+
+                pageClickHandler: function (pageValue) {
+                    this.page = pageValue;
+                    this.filterExtraServiceDtoes();
+
+                },
+                prevPageHandler: function () {
+                    this.page = this.page - 1;
+                    this.filterExtraServiceDtoes();
+                },
+                nextPageHandler: function () {
+                    this.page = this.page + 1;
+                    this.filterExtraServiceDtoes();
+                },
+                filterExtraServiceDtoesToNewPageSize: function () {
+                    let _this = this;
+                    let request = {};
+
+                    request.Keyword = _this.keyword;
+                    request.Page = 1;
+                    request.PageSize = _this.pageSize;
+
+
+                    axios.post(`${baseAddress}/api/ExtraServiceVuePage/filter`, request).then(response => {
+                        _this.extraServiceDtoes = response.data.extraServiceVuePageDtoes;
+                        _this.totalPage = response.data.totalPage;
+
+
+                        for (let i = 0; i < _this.extraServiceDtoes.length; i++) {
+                            let item = _this.extraServiceDtoes[i];
+                        }
+
+
+                    }).catch(err => {
+                        alert(err);
+                    })
+                },
+
+            }
+        };
+        let app = Vue.createApp(vueApp).mount('#app');
+
+
+
+    </script>
+}

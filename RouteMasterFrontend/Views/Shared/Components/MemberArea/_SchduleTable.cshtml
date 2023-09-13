@@ -1,0 +1,143 @@
+﻿@{
+
+	var memberIdFromCookie = Context.Request.Cookies["Id"] ?? "1";
+}
+
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+<style>
+
+
+	.hide {
+		display: none;
+	}
+
+</style>
+
+
+<div class="d-flex">
+	<button class="btn btn-outline-success m-2" id="createCalendar">
+		更新行事曆
+	</button>
+</div>
+
+<div id="calendar"></div>
+
+
+
+<script>
+
+	function initialData() {
+		var calendarEl = document.getElementById('calendar');
+		var calendar = new FullCalendar.Calendar(calendarEl, {
+			initialView: 'timeGridFourDay',
+			views: {
+				timeGridFourDay: {
+					type: 'timeGrid',
+					duration: { days: 4 }
+				}
+			},
+			headerToolbar: {
+				left: 'prev,next',
+				center: 'title',
+				right: 'customPrevButton,customNextButton'
+			},
+			customButtons: {
+				customPrevButton: {
+					text: '前四天',
+					click: function () {
+						// 切換到前四天視圖
+						calendar.changeView('timeGridFourDay');
+					}
+				},
+				customNextButton: {
+					text: '單日',
+					click: function () {
+						// 切換到單日視圖
+						calendar.changeView('timeGridDay');
+					}
+				}
+			},
+			events: [
+			],
+			eventSources: [
+				function () {
+					return fetch(`https://localhost:7251/api/TravelPlans/Get/SchduleData?memberId=${@memberIdFromCookie}`, {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					})
+						.then(function (response) {
+							if (!response.ok) {
+								throw new Error('Network response was not ok');
+							}
+							console.log("response啦")
+							console.log(response)
+							return response.json();
+						})
+						.then(function (data) {
+							// 直接将数据赋值给FullCalendar的事件数组
+							console.log("data啦")
+							console.log(data)
+
+
+							return data;
+						})
+						.catch(function (error) {
+							// 处理获取数据失败的情况
+							console.error(error);
+							return [];
+						});
+				}
+			],
+
+
+			// 你可以在這裡添加其他配置選項
+		});
+		calendar.render();
+	}
+
+
+	document.querySelector("#createCalendar").addEventListener('click', function () {
+
+
+		var calendarEl = document.getElementById('calendar');
+		var calendar = new FullCalendar.Calendar(calendarEl, {
+			initialView: 'timeGridFourDay',
+			views: {
+				timeGridFourDay: {
+					type: 'timeGrid',
+					duration: { days: 4 }
+				}
+			},
+			headerToolbar: {
+				left: 'prev,next',
+				center: 'title',
+				right: 'timeGridFourDay,timeGridDay' // user can switch between the two
+			},
+			events: [
+				// 在這裡添加事件
+				{
+					title: '我的事件1',
+					start: '2023-08-30T08:00:00', // 開始日期和時間
+					end: '2023-08-30T10:00:00'    // 結束日期和時間
+				},
+				{
+					title: '我的事件2',
+					start: '2023-08-30T14:00:00',
+					end: '2023-08-30T16:00:00'
+				}
+			],
+			// 你可以在這裡添加其他配置選項
+		});
+		calendar.render();
+
+	});
+
+
+
+	initialData();
+
+
+</script>

@@ -1,0 +1,1489 @@
+﻿@{
+    //簡化 設置預設值
+    int cartIdFromCookie = int.Parse(Context.Request.Cookies["CartId"] ?? "1");
+    var memberIdFromCookie = Context.Request.Cookies["Id"] ?? "1";
+}
+
+
+@section Styles{
+    <style>
+        .item-container button {
+            position: relative; /* 使按钮成为相对定位的容器 */
+        }
+
+            .item-container button:hover i {
+                opacity: 1; /* 鼠标悬停时设置 i 元素的透明度为 1 */
+            }
+
+            .item-container button i {
+                opacity: 0; /* 初始透明度为 0 */
+                transition: opacity 0.3s; /* 添加过渡效果 */
+            }
+
+
+        .attraction-dot-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+       
+        .vertical-line {
+            width: 4px; /* 线的宽度 */
+            height: 70px; /* 线的高度 */
+            background-color: gray; /* 线的颜色 */
+            position: relative; /* 让 .vertical-line 成为相对定位的容器 */
+            
+        }
+
+            .vertical-line:hover::before {
+                content:  attr(data-distance)"\a"attr(data-duration);
+                position: absolute;
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 5px;
+                border-radius: 5px;
+                top: 0; /* 调整位置以适应您的布局 */
+                right: 100%; /* 悬停效果显示在容器的左侧 */
+                white-space: nowrap;
+                z-index: 999; /* 确保在其他元素之上 */
+                display: none;
+            }
+
+            .vertical-line:hover::before {
+                display: block;
+            }
+
+
+            .timeWarn{
+
+
+                background-color:#FFC107
+            }
+
+        .custom-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 0; /* 调整位置以适应您的布局 */
+            right: 100%; /* 悬停效果显示在容器的左侧 */
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.25rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none; /* 避免阻擋事件 */
+            display: none;
+        }
+
+
+        /* 滑鼠懸停時顯示提示內容 */
+        .custom-btn:hover::after {
+            display: block;
+        }
+
+        .table {
+            width: 100%; /* 让整个表格宽度充满其容器 */
+            table-layout: fixed; /* 使用固定的表格布局 */
+        }
+
+            .table th,
+            .table td {
+                width: 50%; 
+                padding: 4px; /* 添加一些内边距，以确保内容不会紧贴边缘 */
+            }
+
+            .table input[type="datetime-local"] {
+                text-align:center;
+                width: 100%; /* 让输入框宽度充满其父元素（即<td>） */
+                box-sizing: border-box; /* 包含边框在内，以不增加输入框的宽度 */
+            }
+
+
+
+
+        input[type="checkbox"][name="actProductCheckBox"]:hover::before {
+            content: "開始時間: \A" attr(data-startTime) "\A結束時間: \A" attr(data-endTime) "\A 可購買數量: " attr(data-quantity) "\A價格: " attr(data-price);
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            left: 110%; /* 调整tooltip的位置，根据需要 */
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: pre-line; /* 使换行符生效 */
+            z-index: 999;
+            display: none; /* 初始状态下隐藏tooltip */
+            width: 200px; /* 你可以根据需要调整宽度 */
+        }
+
+        input[type="checkbox"][name="actProductCheckBox"]:hover::before {
+            display: block; 
+        }
+
+
+        input[type="checkbox"][name="extProductCheckBox"]:hover::before {
+            content:"可購買數量: " attr(data-quantity) "\A價格: " attr(data-price);
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            left: 110%; /* 调整tooltip的位置，根据需要 */
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: pre-line; /* 使换行符生效 */
+            z-index: 999;
+            display: none; /* 初始状态下隐藏tooltip */
+            width: 200px; /* 你可以根据需要调整宽度 */
+        }
+
+        input[type="checkbox"][name="extProductCheckBox"]:hover::before {
+            display: block;
+        }
+
+
+
+        .disabled-checkbox {
+            opacity: 0.5; /* 降低不可用 checkbox 的不透明度，使其看起来灰色 */
+            pointer-events: none; /* 禁止用户与不可用 checkbox 进行交互 */
+        }
+
+        .fixed-container {
+            position: fixed;
+            bottom: 200px;
+            right: 50px;
+            width: 250px;
+            height: auto; /* 高度设置为自动，容器会根据内容增长 */
+            background-color: #fff;
+            border: 1px solid transparent; /* 初始状态下边框透明 */
+            padding: 10px;
+            /* 其他样式属性，根据需要添加 */
+
+            transition: border-color 0.3s ease; /* 添加过渡效果，使边框的变化平滑 */
+        }
+
+
+            .fixed-container:hover {
+                border-color: #ccc; /* hover 时显示边框颜色 */
+            }
+
+
+        div[name="stayHoursContainer"] {
+            position: relative; /* 让容器成为定位的基准点 */
+        }
+
+        div[name="stayHoursContainer"]:hover::before {
+            content: "平均停留时间: " attr(data-stayHours) " 小时";
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            left: 100%; /* 相对于容器右侧 */
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: pre-line; /* 使换行符生效 */
+            z-index: 999;
+            display: none; /* 初始状态下隐藏tooltip */
+            width: 200px; /* 你可以根据需要调整宽度 */
+        }
+
+        div[name="stayHoursContainer"]:hover::before {
+            display: block;
+        }
+
+        
+   
+    </style>
+}
+
+
+
+<div id="app">    
+
+
+    <div >
+        <button class="btn btn-outline-info dropdown-toggle m-1" @@click="toggleAllAttractionContainer">顯示/隱藏</button>
+        <button class="btn btn-outline-success  m-1" @@click="saveSchedule">儲存行程表</button>
+        <button class="btn btn-outline-secondary m-1" @@click="addAllItemsToCart"><i class="fas fa-shopping-cart"></i></button>
+        <template v-if="AllAttractionContainerStatus">
+            <div>
+                <div class="d-flex row max-height-containers"
+                     style="max-height:500px; overflow-y:auto">
+                    <div class="col-3" v-for="attObj in allAttractions" :key="attObj.attractionId">
+                        <div class="item-container m-3">                     
+                            <button class="btn btn-outline-secondary" v-bind:disabled="selectedAttractions.some(att=>att.attId==attObj.attractionId)" @@click="addAttractionToDistanceMatrixArray(attObj)">{{ attObj.attractionName }}<i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+ 
+
+    <br />
+
+
+    <div class="fixed-container">
+        <div v-for="(visitedAttObj,index) in visitedAttraction "
+             class="w-100"
+             :key="visitedAttObj.attId"
+             style="width:120px;text-align:center;justify-content:center;"
+             @@drop="drop(index,$event)"
+             @@dragover="allowDrop($event)">
+
+            <div class="badge bg-success text-wrap m-2 p-2" style="text-align:center;justify-content:center; cursor: grab; font-size:10px;width:12rem" draggable="true" @@dragstart="drag(visitedAttObj,index,$event)">{{index+1}}. {{visitedAttObj.attName}}</div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <div class="d-flex row">
+        <div class="col-8 row">
+            <div class="col-12">
+                <label>設定起始時間</label>
+                <input v-model="formattedTravelBeginTime" type="datetime-local" @@change="setSortedAttractionsWithTime" />
+                <div class="row">                         
+                    <div class="col-3">
+                        <br />
+                        <br />         
+             
+
+
+                        <div v-for="(attraction, index) in sortedAttractions" :key="attraction.attId" class="attraction-dot-container">
+                            <div class="vertical-line" v-if="index > 0" 
+                                v-bind:data-distance="selectedPathesOrderByAttractions[index-1].distance.text"
+                                 v-bind:data-duration="selectedPathesOrderByAttractions[index-1].duration.text"></div>
+
+     
+                            <div>
+                                <div class="badge bg-success text-wrap  p-1 m-1"
+                                     style="width: 8rem;font-size:15px"
+                                     name="stayHoursContainer"
+                                     :data-stayHours="attraction.stayHours">
+                                    {{attraction.attName}}
+                                </div>
+                                <button class="btn btn-primary  p-1" v-bind:positionx="attraction.positionx" v-bind:positiony="attraction.positiony"
+                                        @@click="selectAccommodationByGoogleMapsApi(attraction,$event)">
+                                    選擇住宿
+                                </button>
+                            </div>
+         
+                            
+                        </div>
+                    </div>
+                    <div class="col-9">                       
+                            <br />
+                            <table class="table">
+                                <thead class="w-100">
+                                    <tr>                                                          
+                                        <th>抵達時間</th>
+                                        <th>離開時間</th>
+                                    </tr>
+                                </thead>
+                            <tbody>
+                                <tr v-for="(attraction, index) in sortedAttractions" :key="attraction.attId" style="height: 100px">                                   
+                                    <td>
+                                        <input v-model="attraction.startTime" type="datetime-local"
+                                               :min="index > 0 ? sortedAttractions[index - 1].endTime : null"                
+                                        @@change="userInputStartTime(attraction,index)" />
+                                        <div style="text-align:center">{{attraction.attName}}</div>
+                                        <ul class="checkbox-list">
+                                            <li v-for="extObj in attraction.extList">
+                                                <label>
+                                                    <input type="checkbox" v-bind:value="extObj.extId"  @@change="setExtProductsInfo(extObj,$event)" /> {{extObj.extName}}
+                                                </label>
+                                                <div style="transform: translateX(20px);" v-if="extObj.extProducts!=''">
+                                                    <ul class="checkbox-list">
+                                                        <li v-for="extProduct in extObj.extProducts">
+                                                            <label >
+                                                                
+                                                                <input type="checkbox" name="extProductCheckBox"
+                                                                       v-bind:value="extProduct.extraServiceProductId"
+                                                                       v-bind:data-quantity="extProduct.quantity"
+                                                                       v-bind:data-price="extProduct.price"
+                                                                    @@change="chooseExtraServiceProductObject(extProduct,$event)" /> {{extProduct.extraServiceName}}
+
+                                                                <input type="number" v-model="extProduct.inputQuantity" value="1" :min="1" :max="extProduct.quantity" class="m-1" style="width:50px" @@input="handleExtProductInputQuantityChange(extProduct,$event)" />
+                                                            </label>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <input v-model="attraction.endTime" type="datetime-local"
+                                               :min="index > 0 ? sortedAttractions[index].startTime: null"
+                                               @@change="userInputEndTime(attraction,index)" />
+                                        <br />
+                                        <ul class="checkbox-list">
+                                            <li v-for="actObj in attraction.actList">
+                                                <label>
+                                                    <input type="checkbox" v-bind:value="actObj.actId"  @@change="setActProductsInfo(actObj,$event)" /> {{actObj.actName}}
+                                                </label>
+                                                <div  style="transform: translateX(20px);" v-if="actObj.actProducts!=''">
+                                                    <ul class="checkbox-list">
+                                                        <li v-for="actProduct in actObj.actProducts">                                             
+                                                            <label v-bind:class="{'timeWarn':attraction.endTime<actProduct.endTime||attraction.startTime>actProduct.startTime}">                                   
+                                                                
+                                                                <input type="checkbox" name="actProductCheckBox"
+                                                                       v-bind:data-startTime="actProduct.startTime"
+                                                                       v-bind:data-endTime="actProduct.endTime"
+                                                                       v-bind:data-quantity="actProduct.quantity"
+                                                                       v-bind:data-price="actProduct.price"
+                                                                    v-bind:value="actProduct.activityProductId"
+                                                                @@change="chooseActivityProductObject(actProduct,$event)" /> {{actProduct.activityName}}
+                                                                <input type="number" v-model="actProduct.inputQuantity" value="1" :min="1" :max="actProduct.quantity" class="m-1" style="width:50px" @@input="handleActProductInputQuantityChange(actProduct,$event)" />
+                                                            </label>                                                         
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </li>                                            
+                                        </ul>                                                                                                                                           
+                                    </td>
+                                </tr>
+                            </tbody>
+                            </table>                                     
+                         </div>                   
+                </div>
+
+
+
+
+
+            </div>
+            
+        </div>
+        <div class="col-4 d-flex row">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link" v-bind:class="{'active':rightSidePage ==1 }" href="#" @@click="setRightSidePage(1)">已選擇{{selectedAttractions.length}}景點</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" v-bind:class="{'active':rightSidePage ==2 }" href="#" @@click="setRightSidePage(2);initMap()">計算路徑</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" v-bind:class="{'active':rightSidePage ==3 }" href="#" @@click="setRightSidePage(3)">未排程景點</a>
+                </li>       
+            </ul>           
+
+            <template v-if="rightSidePage==1">
+                <div class="d-flex">
+                    <div class="m-1">
+                        <label class="m-1 p-1">選擇交通模式</label>
+                        <select class="m-1 p-1" v-model="selectedTravelMode">
+                            <option v-for="travelObj in travelModes" :key="travelObj.id" :value="travelObj.value">
+                                {{ travelObj.modeName }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="m-1">
+                        <button class="btn btn-outline-secondary" @@click="callDistanceMatrix()"><i class="fa-solid fa-play"></i> 取得資料進行排程</button>
+                    </div>
+                </div>
+                <div v-for="selectedAttObj in selectedAttractions" :key="selectedAttObj.attId" class="col-5 m-2 p-2 item-container" >
+                    <div>
+                        <button class="btn btn-outline-secondary"
+                                @@click="removeAttractionFromDistanceMatrixArray(selectedAttObj)">
+                            {{ selectedAttObj.attName }} <i class="fa-solid fa-x"></i>
+                        </button>
+                    </div>
+                </div>               
+            </template>
+
+            <template v-else-if="rightSidePage==2">
+                <div id="map" style="height:600px"></div>
+            </template>
+
+
+            <template v-else="rightSidePage==3">
+                <div>         
+                    <div v-for="attObj in unvisitedAttraction" :key="attObj.attId">
+                        <div class="badge bg-secondary text-wrap m-2 p-2" style="width: 15rem;font-size:20px">{{attObj.attName}}</div>
+                        <button class="m-1 p-1 btn btn-outline-secondary" @@click="AddToVisitedArray(attObj);setSortedAttractionsWithTime()">加入</button>
+                    </div>                 
+                </div>
+            </template>
+
+  
+        </div>    
+    </div>
+
+
+
+</div>
+
+
+@section Scripts{
+  
+
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=輸入googleMaps金鑰" defer></script>
+    <script src="https://kit.fontawesome.com/f9e3b12327.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/vue@3.2.36/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+            integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+
+        let baseAddress = "https://localhost:7015";
+        let vueApp ={
+            data(){
+                return{
+                    memberId: @memberIdFromCookie,
+                    cartId: @cartIdFromCookie,
+                    rightSidePage: 1,
+
+                    AllAttractionContainerStatus:false,
+                    allAttractions:[],
+
+                    travelModes: [{ id: 1, modeName: "開車", value: "DRIVING" }, { id: 2, modeName: "步行", value: "WALKING" }, { id: 3, modeName: "骑自行车", value: "BICYCLING" }],
+                    selectedTravelMode:"DRIVING",
+
+                    //選擇景點
+                    selectedAttractions:[],                
+
+                    dataFromDistanceMatrix:[],
+
+
+
+
+                    //行程起始時間
+                    travelBeginTime: new Date(),
+
+                    //未拜訪景點
+                    unvisitedAttraction:[],
+
+                    //已拜訪景點
+                    visitedAttraction:[],
+
+
+                    map: null,
+                    directionsService: null,
+                    directionsRenderer: null,
+
+
+                    sortedAttractionsWithTime:[],
+                    selectedActProductScheduleObjsInfo:[],
+
+                    selectedActivityProducts:[],
+                    selectedExtraServiceProducts:[],                   
+                    roomProducts:{},
+                };
+            },
+
+            mounted: async function () {
+                let _this=this;
+                await  _this.getAllAttractions();
+                await _this.initMap();
+
+            },
+            computed:{
+                sendToGoogleMapsApi:function(){
+                    return this.selectedAttractions.map(attraction=>({
+                        lat: parseFloat(attraction.positionX),
+                        lng: parseFloat(attraction.positionY)
+                    }));
+                },
+                sortedAttractions: function () {
+
+                   return  this.visitedAttraction.map(visitedItem=>{
+
+                        const matchingItem = this.allAttractions.find(allAttObj => allAttObj.attractionId == visitedItem.attId)
+
+
+                        if (matchingItem){
+                            return{
+                                attId: visitedItem.attId,
+                                attName: visitedItem.attName,
+                                stayHours: matchingItem.stayHours,
+                                extList: matchingItem.extListInAtt,
+                                actList: matchingItem.actListInAtt,
+                                startTime:"",
+                                endTime:"",
+                                positionx: matchingItem.positionX,
+                                positiony: matchingItem.positionY,
+                            };
+                        }
+                     });
+                },
+
+
+
+
+                selectedPathesOrderByAttractions:function(){
+                    const pathes = [];
+
+                    for (let i = 1; i < this.sortedAttractions.length; i++) {
+                        const start = {
+                            attId: this.sortedAttractions[i - 1].attId,
+                            attName: this.sortedAttractions[i - 1].attName,
+                        };
+
+                        const end = {
+                            attId: this.sortedAttractions[i].attId,
+                            attName: this.sortedAttractions[i].attName,
+                        };
+
+                        const matchingData = this.dataFromDistanceMatrix.find(item => {
+                            return item.start.attId === start.attId && item.end.attId === end.attId;
+                        });
+
+                        if (matchingData) {
+                            const path = {
+                                start: start,
+                                end: end,
+                                distance: matchingData.distance,
+                                duration: matchingData.duration,
+                            };
+
+                            pathes.push(path);
+                        }
+                    }
+
+                    return pathes;
+                },
+                formattedTravelBeginTime: {
+                    get() {
+                        // 將日期轉換為 datetime-local 字串格式
+                        const year = this.travelBeginTime.getFullYear();
+                        const month = String(this.travelBeginTime.getMonth() + 1).padStart(2, '0');
+                        const day = String(this.travelBeginTime.getDate()).padStart(2, '0');
+                        const hours = String(this.travelBeginTime.getHours()).padStart(2, '0');
+                        const minutes = String(this.travelBeginTime.getMinutes()).padStart(2, '0');
+
+                        return `${year}-${month}-${day}T${hours}:${minutes}`;
+                    },
+                    set(value) {
+                        // 將 datetime-local 字串轉換為日期
+                        this.travelBeginTime = new Date(value);
+                    },
+                },
+                vuePageSchduleObjs: function () {
+                    // 初始化一个空数组来存储结果
+                    let result = [];
+
+                    // 遍历sortedAttractionsWithTime数组
+                    for (let i = 0; i < this.sortedAttractionsWithTime.length; i++) {
+                        const currentAttraction = this.sortedAttractionsWithTime[i];
+
+                        // 创建一个对象来表示当前景点的停留时间
+                        const attractionObj = {
+                            title: currentAttraction.attName + "停留",
+                            start: currentAttraction.startTime,
+                            end: currentAttraction.endTime
+                        };
+
+                        // 将当前景点的停留时间对象添加到结果数组中
+                        result.push(attractionObj);
+
+                        // 如果不是最后一个景点
+                        if (i < this.sortedAttractionsWithTime.length - 1) {
+                            // 创建一个对象来表示交通时间
+                            const transportationObj = {
+                                title: "交通时间",
+                                start: currentAttraction.endTime,
+                                end: this.sortedAttractionsWithTime[i + 1].startTime
+                            };
+
+                            // 将交通时间对象添加到结果数组中
+                            result.push(transportationObj);
+                        }
+                    }
+
+                    if (this.selectedActProductScheduleObjsInfo) {
+                        result = result.concat(this.selectedActProductScheduleObjsInfo);
+                    }
+
+
+                    return result;
+                },
+
+
+                sendToGoogleMapsDirectionsApi: function () {
+                    let newArray = this.shortestPathAttractionsByGreedySolution;
+
+                    if (newArray && newArray.length > 0) {
+                        return newArray.map(attraction => ({
+                            lat: parseFloat(attraction.positionX),
+                            lng: parseFloat(attraction.positionY)
+                        }));
+                    } else {
+                        return [];
+                    }
+
+                 
+                },
+
+
+
+                shortestPathAttractionsByGreedySolution: function () {
+
+                    let copyArray = this.selectedAttractions.slice()
+                    if (copyArray.length>0) {
+                        return this.greedyTSP(copyArray);
+
+                    }else{
+
+                        return [];
+
+                    }
+                    
+               
+
+                   
+
+
+                },
+
+                
+            },
+            methods:{
+                initMap:function() {
+                    this.map = new google.maps.Map(document.getElementById('map'), {
+                        zoom: 10,
+                        center: { lat: 23.6978, lng: 120.9605 }
+                    });
+
+                    this.directionsService = new google.maps.DirectionsService;
+                    this.directionsRenderer = new google.maps.DirectionsRenderer({
+                        map: this.map,
+                        suppressMarkers: false
+                    });
+                    const routeCoordinates = this.sendToGoogleMapsDirectionsApi;
+
+                    const waypoints = routeCoordinates.slice(1, -1).map(coord => {
+                        return { location: coord, stopover: true };
+                    });
+
+                    const request = {
+                        origin: routeCoordinates[0],
+                        destination: routeCoordinates[routeCoordinates.length - 1],
+                        waypoints: waypoints,
+                        travelMode: google.maps.TravelMode.DRIVING
+                    };
+
+                    // 获取路线并绘制在地图上
+                    this.directionsService.route(request, (response, status) => {
+                        if (status === google.maps.DirectionsStatus.OK) {
+                            this.directionsRenderer.setDirections(response);
+                            console.log("畫路線啦")
+
+                        } else {
+                            window.alert('路线请求失败：' + status);
+                        }
+                    });
+
+
+                },
+
+
+                getAllAttractions:async function(){
+                   
+                  await  axios.get(`${baseAddress}/api/TravelPlans/Get/AllAttractionsInfo`)
+             
+                    .then(response=>{                       
+                            this.allAttractions=response.data;
+                    })
+                    .catch(err=>{
+                        alert(err)
+                    })
+                },
+                toggleAllAttractionContainer:function(){
+                    this.AllAttractionContainerStatus = !this.AllAttractionContainerStatus;
+                },
+                addAttractionToDistanceMatrixArray:function(attObj){
+
+                    if (this.sendToGoogleMapsApi.length == 10) {
+                       alert("至多選擇十個項目進行排序，請移除其他項目後再加入")
+                    }else{
+                        if (!this.selectedAttractions.some(selAttObj => selAttObj.attId == attObj.attractionId)) {
+                            this.selectedAttractions.push({ attId: attObj.attractionId, attName: attObj.attractionName, positionX: attObj.positionX, positionY: attObj.positionY })
+                        } else {
+                            alert('已存在該景點')
+                        }
+                    }                  
+                },
+                removeAttractionFromDistanceMatrixArray: function (selectedAttObj) {
+                    const index = this.selectedAttractions.findIndex(obj => obj.attId === selectedAttObj.attId);
+                    if (index !== -1) {
+                        this.selectedAttractions.splice(index, 1);
+                    }else{
+                        alert('欲移除之項目不存在')
+                    }
+                },
+                callDistanceMatrix:async function(){
+
+                    if (this.sendToGoogleMapsApi.length<2){
+                        alert("請選擇至少兩個景點")
+                    }else{
+
+                        const service = new google.maps.DistanceMatrixService();
+
+                        await service.getDistanceMatrix(
+                            {
+                                origins: this.sendToGoogleMapsApi,
+                                destinations: this.sendToGoogleMapsApi,
+                                travelMode: this.selectedTravelMode,
+                                unitSystem: google.maps.UnitSystem.METRIC,
+                                avoidHighways: false,
+                                avoidTolls: false,
+                            },
+                            (response, status) => {
+                                if (status === "OK") {
+                                    console.log(response);
+                                    this.dataFromDistanceMatrix = [];
+
+
+                                    for (let i = 0; i < response.rows.length; i++) {
+                                        for (let j = 0; j < response.rows[i].elements.length; j++) {
+                                            this.dataFromDistanceMatrix.push({
+                                                start: this.selectedAttractions[i],
+                                                end: this.selectedAttractions[j],
+                                                distance: response.rows[i].elements[j].distance,
+                                                duration: response.rows[i].elements[j].duration
+                                            })
+                                        }
+                                    }
+                                } else {
+                                    console.error("距離矩陣計算失敗，原因：" + status);
+                                }
+                            }
+                        );
+                    }                
+                    this.unvisitedAttraction = this.selectedAttractions;
+
+                    //清空目前結果??
+                    //不一定要清空
+                    //好像還是得清空，不然行為判斷邏輯要另外判斷是否已經visited
+                    this.visitedAttraction=[];
+                },
+
+
+
+
+               drag: function (visitedAttObj,index, event) {            
+                    event.dataTransfer.setData('visitedAttObj', JSON.stringify(visitedAttObj));
+                    event.dataTransfer.setData('currentIndex', index);
+               },
+
+               allowDrop:function(e){                 
+                    e.preventDefault();
+               },
+
+
+               drop: function (targetIndex, event) {
+                    event.preventDefault();
+                    const data = JSON.parse(event.dataTransfer.getData('visitedAttObj'));
+                    const currentIndex = event.dataTransfer.getData('currentIndex');
+
+                    const temp = this.visitedAttraction[targetIndex];
+
+                    this.visitedAttraction[targetIndex]=data;
+                    this.visitedAttraction[currentIndex]=temp;
+
+
+                    this.setSortedAttractionsWithTime();
+               },
+
+              
+        
+
+
+
+                AddToVisitedArray: function (attObj){
+                    const targetIndex = this.unvisitedAttraction.findIndex(obj => obj.attId === attObj.attId)
+                    this.unvisitedAttraction.splice(targetIndex,1);
+                    this.visitedAttraction.push(attObj);
+                },
+                setRightSidePage:function(number){   
+                    this.rightSidePage=number;
+                },
+
+
+
+                //排程方法
+                setSortedAttractionsWithTime:async function(){
+                    this.sortedAttractionsWithTime = this.sortedAttractions;
+                    for (let i = 0; i < this.sortedAttractionsWithTime.length;i++){
+                        if(i==0){
+                            this.sortedAttractionsWithTime[i].startTime = this.formattedTravelBeginTime
+                            await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/StayHours`, {
+                                params: {
+                                    startTime: this.sortedAttractionsWithTime[i].startTime,
+                                    stayHours: this.sortedAttractionsWithTime[i].stayHours
+                                }
+                            }).then(response => {
+                                this.sortedAttractionsWithTime[i].endTime=response.data
+                            }).catch(err => {
+                                console.log(err)
+                            })
+                        }else{
+                            if (i > 0 && this.sortedAttractionsWithTime.length > i) {
+                                let prevEndTime = this.sortedAttractionsWithTime[i - 1].endTime;
+                                let durationSeconds = this.selectedPathesOrderByAttractions[i - 1].duration.value
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/DurationValue`, {
+                                    params: {
+                                        prevEndTime: prevEndTime,
+                                        durationSeconds: durationSeconds,
+                                    }
+                                }).then(response => {
+                          
+                                    this.sortedAttractionsWithTime[i].startTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/StayHours`, {
+                                    params: {
+                                        startTime: this.sortedAttractionsWithTime[i].startTime,
+                                        stayHours: this.sortedAttractionsWithTime[i].stayHours
+                                    }
+                                }).then(response => {
+                              
+                                    this.sortedAttractionsWithTime[i].endTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+                            } 
+                        }
+                    }
+
+                    this.$forceUpdate()
+                },
+
+
+                //輸入抵達時間
+                userInputStartTime: async function (attraction, index) {
+                    console.log("使用者改抵達時間啦")
+                    console.log(attraction)
+                    console.log(index)
+
+                    //this.sortedAttractionsWithTime[index].startTime已改，之後也要完成
+                    if(index==0){
+                        this.formattedTravelBeginTime = attraction.startTime;
+                   
+                     await   this.setSortedAttractionsWithTime();
+
+                    }else{
+
+                        console.log("index==0沒錯啦，但是我進來摟!")
+                        for (let i = index; i < this.sortedAttractionsWithTime.length; i++) {
+
+
+                            if(i==index){
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/StayHours`, {
+                                    params: {
+                                        startTime: this.sortedAttractionsWithTime[i].startTime,
+                                        stayHours: this.sortedAttractionsWithTime[i].stayHours
+                                    }
+                                }).then(response => {
+                                    this.sortedAttractionsWithTime[i].endTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })                              
+
+                            }else{
+                                let prevEndTime = this.sortedAttractionsWithTime[i - 1].endTime;
+                                let durationSeconds = this.selectedPathesOrderByAttractions[i - 1].duration.value
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/DurationValue`, {
+                                    params: {
+                                        prevEndTime: prevEndTime,
+                                        durationSeconds: durationSeconds,
+                                    }
+                                }).then(response => {
+
+                                    this.sortedAttractionsWithTime[i].startTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/StayHours`, {
+                                    params: {
+                                        startTime: this.sortedAttractionsWithTime[i].startTime,
+                                        stayHours: this.sortedAttractionsWithTime[i].stayHours
+                                    }
+                                }).then(response => {
+
+                                    this.sortedAttractionsWithTime[i].endTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+
+
+
+                            }
+
+
+
+
+                            
+
+
+                            }
+
+
+                    }
+
+                    this.$forceUpdate()
+                },
+
+                //輸入離開時間
+                userInputEndTime: async function (attraction, index) {
+                    console.log("使用者改離開時間啦")
+                    console.log(attraction)
+                    console.log(index)
+
+
+                   
+
+
+                    if(index==0){
+                        for (let i = index; i < this.sortedAttractionsWithTime.length; i++) {
+
+
+
+                            if (i == 0) {
+
+                                console.log('donothing');
+
+                            } else {
+
+                                let prevEndTime = this.sortedAttractionsWithTime[i - 1].endTime;
+                                console.log(prevEndTime)
+
+
+                                let durationSeconds = this.selectedPathesOrderByAttractions[i - 1].duration.value
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/DurationValue`, {
+                                    params: {
+                                        prevEndTime: prevEndTime,
+                                        durationSeconds: durationSeconds,
+                                    }
+                                }).then(response => {
+
+                                    this.sortedAttractionsWithTime[i].startTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/StayHours`, {
+                                    params: {
+                                        startTime: this.sortedAttractionsWithTime[i].startTime,
+                                        stayHours: this.sortedAttractionsWithTime[i].stayHours
+                                    }
+                                }).then(response => {
+
+                                    this.sortedAttractionsWithTime[i].endTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+                            }
+                        }
+
+                    }else{
+                        for (let i = index; i < this.sortedAttractionsWithTime.length; i++){
+                            if(i==index){
+                                console.log('donothingAgain')
+                            }else{
+                                let prevEndTime = this.sortedAttractionsWithTime[i - 1].endTime;
+                                console.log(prevEndTime)
+
+
+                                let durationSeconds = this.selectedPathesOrderByAttractions[i - 1].duration.value
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/DurationValue`, {
+                                    params: {
+                                        prevEndTime: prevEndTime,
+                                        durationSeconds: durationSeconds,
+                                    }
+                                }).then(response => {
+
+                                    this.sortedAttractionsWithTime[i].startTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+
+                                await axios.get(`${baseAddress}/api/TravelPlans/Get/CalculateTransportTime/StayHours`, {
+                                    params: {
+                                        startTime: this.sortedAttractionsWithTime[i].startTime,
+                                        stayHours: this.sortedAttractionsWithTime[i].stayHours
+                                    }
+                                }).then(response => {
+
+                                    this.sortedAttractionsWithTime[i].endTime = response.data
+                                }).catch(err => {
+                                    console.log(err)
+                                })
+                            }
+                        }
+                    }
+
+                   
+
+
+                    this.$forceUpdate()
+                },
+
+
+
+
+                setActProductsInfo: async function (actObj, event) {
+                    const target = event.target;
+       
+                    if (target.checked) {
+                  
+
+                        try {
+                            const response = await axios.get(`${baseAddress}/api/TravelPlans/Get/VuePageActProductsInfo`, {
+                                params: {
+                                    activityId: actObj.actId,
+                                    beginDateTime: this.formattedTravelBeginTime
+                                }
+                            });
+                
+                            console.log(actObj)
+                            actObj.actProducts = response.data;
+
+                            if(actObj.actProducts.length==0){
+                                target.classList.add("disabled-checkbox")
+                            }
+                        } catch (err) {
+                            console.log(err)
+                        }
+
+                    } else {
+
+
+                        let temp = actObj.actProducts;
+
+                        actObj.actProducts = "";
+
+                        
+                        for(let i=0;i<temp.length;i++){
+      
+
+                            //let targetIndex = this.selectedActivityProducts.findIndex(obj => obj.activityProductId == temp[i].activityProductId);
+                            const indexToRemove = this.selectedActivityProducts.findIndex(item => item.actProductId === temp[i].activityProductId);
+
+
+
+                            if (indexToRemove != -1) {
+                                this.selectedActivityProducts.splice(indexToRemove, 1);
+                            }else{
+                                console.log('刪不掉根本刪不掉')
+                            }
+                          
+                        }
+                      
+
+
+
+
+                        target.removeAttribute('checked');
+
+                    }
+                },
+
+
+                setExtProductsInfo: async function (extObj, event) {
+                    const target = event.target;
+ 
+                    if (target.checked) {
+              
+
+                        try {
+                            const response = await axios.get(`${baseAddress}/api/TravelPlans/Get/VuePageExtProductsInfo`, {
+                                params: {
+                                    extraServiceId: extObj.extId,
+                                    beginDateTime: this.formattedTravelBeginTime
+                                }
+                            });
+       
+
+                            extObj.extProducts = response.data;
+
+
+                            if (extObj.extProducts.length == 0) {
+                                target.classList.add("disabled-checkbox")
+                            }
+                        } catch (err) {
+                            console.log(err)
+                        }
+
+                    } else {
+               
+
+
+                        let temp = extObj.extProducts
+
+
+                        extObj.extProducts = "";
+
+
+
+
+                        for (let i = 0; i < temp.length; i++) {
+                    
+
+                            //let targetIndex = this.selectedActivityProducts.findIndex(obj => obj.activityProductId == temp[i].activityProductId);
+                            const indexToRemove = this.selectedExtraServiceProducts.findIndex(item => item.extProductId === temp[i].extraServiceProductId);
+
+
+
+                            if (indexToRemove != -1) {
+                                this.selectedExtraServiceProducts.splice(indexToRemove, 1);
+                            } else {
+                                console.log('刪不掉根本刪不掉')
+                            }
+
+                        }
+                        target.removeAttribute('checked');
+                    }
+                },
+
+
+
+                chooseActivityProductObject: function (actProduct,event) {
+
+                    console.log(actProduct)
+                    const target = event.target;
+
+                    if (target.checked) {
+           
+
+                        if (actProduct.inputQuantity==undefined){
+                            actProduct.inputQuantity=1
+                        }
+
+
+                        const indexToRemove = this.selectedActivityProducts.findIndex(item => item.actProductId === actProduct.activityProductId);
+                        if (indexToRemove !== -1) {
+                            // 使用 splice() 方法移除目标元素
+                            this.selectedActivityProducts.splice(indexToRemove, 1);
+                        }
+
+                        this.selectedActivityProducts.push({ actProductId: actProduct.activityProductId, quantity: actProduct.inputQuantity })
+                        this.selectedActProductScheduleObjsInfo.push({ title: actProduct.activityName, start: actProduct.startTime, end: actProduct.endTime })
+
+
+
+
+                    } else {             
+
+                        const indexToRemove = this.selectedActivityProducts.findIndex(item => item.actProductId === actProduct.activityProductId);
+                        if (indexToRemove !== -1) {
+                            // 使用 splice() 方法移除目标元素
+                            this.selectedActivityProducts.splice(indexToRemove, 1);
+                            this.selectedActProductScheduleObjsInfo.splice(indexToRemove,1);
+                        }
+
+                        target.removeAttribute('checked');
+
+                    }
+
+                 
+              
+                },
+
+                handleActProductInputQuantityChange: function (actProduct, event) {
+                    const checkbox = event.target.nextElementSibling;
+                    const changeEvent = new Event('change', { bubbles: true, cancelable: false });
+                    checkbox.dispatchEvent(changeEvent);
+
+                },
+
+
+                chooseExtraServiceProductObject:function(extProduct,event){
+                  
+                    const target = event.target;
+
+                    if (target.checked) {         
+
+                        if (extProduct.inputQuantity == undefined) {
+                            extProduct.inputQuantity = 1
+                        }
+
+                        const indexToRemove = this.selectedExtraServiceProducts.findIndex(item => item.extProductId === extProduct.extraServiceProductId);
+                        if (indexToRemove !== -1) {
+                            // 使用 splice() 方法移除目标元素
+                            this.selectedExtraServiceProducts.splice(indexToRemove, 1);
+                        }
+
+
+                        this.selectedExtraServiceProducts.push({ extProductId: extProduct.extraServiceProductId, quantity: extProduct.inputQuantity })
+
+                    } else {
+              
+
+                        const indexToRemove = this.selectedExtraServiceProducts.findIndex(item => item.extProductId === extProduct.extraServiceProductId);
+                        if (indexToRemove !== -1) {
+                            // 使用 splice() 方法移除目标元素
+                            this.selectedExtraServiceProducts.splice(indexToRemove, 1);
+                        }
+
+
+                        target.removeAttribute('checked');
+
+                    }
+
+
+
+                },
+
+
+
+                handleExtProductInputQuantityChange: function (extProduct, event) {
+                    const checkbox = event.target.nextElementSibling;
+                    const changeEvent = new Event('change', { bubbles: true, cancelable: false });
+                    checkbox.dispatchEvent(changeEvent);
+
+                },
+
+
+
+                selectAccommodationByGoogleMapsApi: function (attraction,event) {
+                    const y =Number(attraction.positionx)
+                    const x =Number(attraction.positiony)
+                    const name = attraction.attName
+                    const _this = event.target;
+                    const _thisVueObj = this;
+
+                    var newWindow = window.open("https://localhost:7145/accommodations/index?Recommend=", "_blank");
+
+                    // 监听新窗口的消息事件
+                    window.addEventListener("message", function (event) {
+                        if (event.source === newWindow && event.origin === window.location.origin) {
+                            // 在这里处理从新窗口传回的消息
+                            _thisVueObj.roomProducts = JSON.parse(event.data);
+                            console.log(_thisVueObj.roomProducts);
+                            _this.innerText = _thisVueObj.roomProducts.accommodationName;
+
+                            let tooltipContent = `已加入${_thisVueObj.roomProducts.cartProducts.length}間房間`;
+
+                            _this.setAttribute("data-tooltip", tooltipContent);
+                            _this.setAttribute("style", "position:relative");
+                            _this.classList.add("custom-btn");
+                            _this.classList.remove("btn-primary");
+                            _this.classList.add("btn-warning");          
+                        }
+                    });
+
+                    // 在新窗口中执行操作
+                    newWindow.addEventListener("load", function () {
+                        // 调用新窗口中定义的函数，并将结果传回到原始窗口
+                        var result = newWindow.app.RecommendAccommodation(x, y, name);
+                    });
+
+
+
+                },
+
+                addAllItemsToCart:function(){
+                    if (this.selectedActivityProducts.length == 0 && this.selectedExtraServiceProducts.length == 0 && this.roomProducts.cartProducts.length == 0) {
+                       alert('請至少選擇一項商品才可以加入購物車')
+                    } else 
+                    {
+                       
+
+                        //住宿商品放入postData
+                        const postData = {
+                            cartId: this.cartId,
+
+
+                            roomProducts: this.roomProducts.cartProducts,
+
+                            activityProductIds: this.selectedActivityProducts,
+                            extraServiceProductIds: this.selectedExtraServiceProducts,
+                        }
+
+                        axios.post(`${baseAddress}/api/Carts/Post/Travel`, postData)
+                            .then(response => {
+                                alert('已成功加入購物車!');
+                                reloadCartItems();
+                            })
+                            .catch(error => {
+                                console.log(error)
+                            })
+
+                    }
+
+
+
+
+                },
+
+
+
+
+                saveSchedule:function(){
+                    console.log("存行程表")
+
+                    const postData = {
+                        memberId: this.memberId,
+                        vuePageSchduleObjs: this.vuePageSchduleObjs,
+                        createDate: this.formattedTravelBeginTime,
+                    };
+
+                    axios.post(`${baseAddress}/api/TravelPlans/Post/SaveVuePageSchduleData`, postData)
+                        .then(response => {
+                            alert('已成功儲存!');
+                        })
+                        .catch(error => {
+                            console.log(error)
+                        });
+
+                },
+
+                greedyTSP: function (copyArray) {
+                    if (this.dataFromDistanceMatrix.length > 0) {
+                        let shortestOrderArray = [];
+                        let selectedPath = [];
+                        let unvisitedArrayInGreedyTsp = copyArray.slice();
+                        let distanceToEach = this.dataFromDistanceMatrix.filter(x => x.distance.value !== 0);
+                        let newStart;
+
+                        while (unvisitedArrayInGreedyTsp.length > 0) {
+
+                            if (unvisitedArrayInGreedyTsp.length == copyArray.length) {
+                                let shortestObj = this.getShortestDistanceObject(distanceToEach);
+                                selectedPath.push(shortestObj);
+
+
+                                let startIndex = unvisitedArrayInGreedyTsp.indexOf(shortestObj.start);
+                                if (startIndex !== -1) {
+                                    unvisitedArrayInGreedyTsp.splice(startIndex, 1);
+                                    shortestOrderArray.push(shortestObj.start);
+
+                                }
+
+                                let endIndex = unvisitedArrayInGreedyTsp.indexOf(shortestObj.end);
+                                if (endIndex !== -1) {
+                                    unvisitedArrayInGreedyTsp.splice(endIndex, 1);
+                                    shortestOrderArray.push(shortestObj.end);
+                                }
+
+
+
+                                newStart = shortestObj.end;
+
+                            } else {
+                                let shortestObj = this.getNextDistanceObject(distanceToEach, newStart, shortestOrderArray)
+                                selectedPath.push(shortestObj);
+                                let startIndex = unvisitedArrayInGreedyTsp.indexOf(shortestObj.start);
+                                if (startIndex !== -1) {
+                                    unvisitedArrayInGreedyTsp.splice(startIndex, 1);
+                                    shortestOrderArray.push(shortestObj.start);
+                                }
+
+                                let endIndex = unvisitedArrayInGreedyTsp.indexOf(shortestObj.end);
+                                if (endIndex !== -1) {
+                                    unvisitedArrayInGreedyTsp.splice(endIndex, 1);
+                                    shortestOrderArray.push(shortestObj.end);
+                                }
+
+                                newStart = shortestObj.end;
+
+
+
+
+
+
+                            }
+                            if (unvisitedArrayInGreedyTsp.length === 0) {
+                                break;
+                            }
+
+
+
+
+
+
+                        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        return shortestOrderArray;
+                    } else {
+                        return null;
+                    }
+
+                },
+                getShortestDistanceObject: function (distanceToEach) {
+                    if (distanceToEach.length === 0) {
+                        return undefined;
+                    }
+                    let shortestDistanceObject = distanceToEach[0];
+                    let shortestDistance = shortestDistanceObject.distance.value;
+
+                    for (let i = 1; i < distanceToEach.length; i++) {
+                        const currentObject = distanceToEach[i];
+                        const currentDistance = currentObject.distance.value;
+
+                        if (currentDistance < shortestDistance) {
+                            shortestDistanceObject = currentObject;
+                            shortestDistance = currentDistance;
+                        }
+                    }
+                    return shortestDistanceObject;
+
+                },
+                getNextDistanceObject: function (distanceToEach, startPoint, visited) {
+
+                    if (distanceToEach.length === 0) {
+                        return undefined;
+                    }
+                    const objectsWithStartingPoint = distanceToEach.filter(obj => obj.start == startPoint);
+                    if (objectsWithStartingPoint.length == 0) {
+                        return undefined;
+                    }
+                    // Filter out objects whose destinations are already in "visited" array
+                    const unvisitedObjects = objectsWithStartingPoint.filter(obj => !visited.includes(obj.end));
+                    if (unvisitedObjects.length === 0) {
+                        return undefined;
+                    }
+                    let shortestDistanceObject = unvisitedObjects[0];
+                    let shortestDistance = shortestDistanceObject.distance.value;
+                    for (let i = 1; i < unvisitedObjects.length; i++) {
+                        const currentObject = unvisitedObjects[i];
+                        const currentDistance = currentObject.distance.value;
+
+                        if (currentDistance < shortestDistance) {
+                            shortestDistanceObject = currentObject;
+                            shortestDistance = currentDistance;
+                        }
+                    }
+                    return shortestDistanceObject;
+
+
+
+
+                },
+
+
+
+
+            }
+        };
+
+        let app = Vue.createApp(vueApp).mount('#app');
+
+
+
+    </script>
+}
